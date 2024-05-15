@@ -6,8 +6,10 @@ import com.tripply.Auth.model.ResponseModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,7 +32,7 @@ public class AuthExceptionHandler {
     }
 
     @ExceptionHandler(RecordNotFoundException.class)
-    public ResponseEntity<Object> handleRecordNotFoundException(RecordNotFoundException ex) {
+    public ResponseEntity<ResponseModel<String>> handleRecordNotFoundException(RecordNotFoundException ex) {
         log.error("RecordNotFoundException occurred: ", ex);
         ResponseModel<String> errorResponse = new ResponseModel<>();
         errorResponse.setStatus(HttpStatus.NOT_FOUND);
@@ -43,7 +45,7 @@ public class AuthExceptionHandler {
     }
 
     @ExceptionHandler(FailToSaveException.class)
-    public ResponseEntity<Object> failToSaveException(FailToSaveException ex) {
+    public ResponseEntity<ResponseModel<String>> failToSaveException(FailToSaveException ex) {
         log.error("FailToSaveException occurred: ", ex);
         ResponseModel<String> errorResponse = new ResponseModel<>();
         errorResponse.setStatus(HttpStatus.NOT_FOUND);
@@ -56,20 +58,20 @@ public class AuthExceptionHandler {
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Object> badCredentialsException(BadCredentialsException ex) {
-        log.error("FailToSaveException occurred: ", ex);
+    public ResponseEntity<ResponseModel<String>> badCredentialsException(BadCredentialsException ex) {
+        log.error("BadCredentialsException occurred: ", ex);
         ResponseModel<String> errorResponse = new ResponseModel<>();
-        errorResponse.setStatus(HttpStatus.NOT_FOUND);
+        errorResponse.setStatus(HttpStatus.UNAUTHORIZED);
         errorResponse.setTimestamp(LocalDateTime.now());
         errorResponse.setErrors(List.of(ErrorDetails.builder()
-                .errorCode(ErrorConstant.ER001.getErrorCode())
+                .errorCode(ErrorConstant.ER004.getErrorCode())
                 .errorDesc(ex.getMessage())
                 .build()));
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(ServiceCommunicationException.class)
-    public ResponseEntity<Object> serviceCommunicationException(ServiceCommunicationException ex) {
+    public ResponseEntity<ResponseModel<String>> serviceCommunicationException(ServiceCommunicationException ex) {
         log.error("FailToSaveException occurred: ", ex);
         ResponseModel<String> errorResponse = new ResponseModel<>();
         errorResponse.setStatus(HttpStatus.NOT_FOUND);
@@ -82,15 +84,42 @@ public class AuthExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleException(Exception ex) {
+    public ResponseEntity<ResponseModel<String>> handleException(Exception ex) {
         log.error("Exception occurred: ", ex);
         ResponseModel<String> errorResponse = new ResponseModel<>();
-        errorResponse.setStatus(HttpStatus.NOT_FOUND);
+        errorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         errorResponse.setTimestamp(LocalDateTime.now());
         errorResponse.setErrors(List.of(ErrorDetails.builder()
                 .errorCode(ErrorConstant.ER003.getErrorCode())
                 .errorDesc(ErrorConstant.ER003.getErrorDescription())
                 .build()));
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ResponseModel<String>> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException ex) {
+        log.error("HttpMediaTypeNotSupportedException occurred: ", ex);
+        ResponseModel<String> errorResponse = new ResponseModel<>();
+        errorResponse.setStatus(HttpStatus.FORBIDDEN);
+        errorResponse.setTimestamp(LocalDateTime.now());
+        errorResponse.setErrors(List.of(ErrorDetails.builder()
+                .errorCode(ErrorConstant.ER003.getErrorCode())
+                .errorDesc(ex.getMessage())
+                .build()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ResponseModel<String>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        log.error("MethodArgumentTypeMismatchException occurred: ", ex);
+        ResponseModel<String> errorResponse = new ResponseModel<>();
+        errorResponse.setStatus(HttpStatus.FORBIDDEN);
+        errorResponse.setTimestamp(LocalDateTime.now());
+        errorResponse.setErrors(List.of(ErrorDetails.builder()
+                .errorCode(ErrorConstant.ER005.getErrorCode())
+                .errorDesc(ErrorConstant.ER005.getErrorDescription())
+                .build()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
 }

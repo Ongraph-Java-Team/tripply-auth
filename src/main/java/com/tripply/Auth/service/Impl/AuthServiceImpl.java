@@ -1,6 +1,8 @@
 package com.tripply.Auth.service.Impl;
 
+import com.tripply.Auth.constants.ErrorConstant;
 import com.tripply.Auth.entity.User;
+import com.tripply.Auth.exception.BadCredentialsException;
 import com.tripply.Auth.exception.RecordNotFoundException;
 import com.tripply.Auth.repository.UserRepository;
 import com.tripply.Auth.model.request.LoginRequest;
@@ -11,7 +13,6 @@ import com.tripply.Auth.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,7 +39,7 @@ public class AuthServiceImpl implements AuthService {
 
         User user = userDetails.get();
         if (!isCorrectPassword(user.getPassword(), loginRequest.getPassword())) {
-            throw new BadCredentialsException("Bad credentials");
+            throw new BadCredentialsException(ErrorConstant.ER004.getErrorDescription());
         }
 
         final String token = jwtUtil.generateToken(user);

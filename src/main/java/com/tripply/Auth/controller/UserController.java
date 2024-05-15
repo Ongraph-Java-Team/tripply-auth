@@ -31,7 +31,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = "/createRole", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/create-role", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public  ResponseEntity<ResponseModel<String>> createRole(@Valid @RequestBody RoleDto roleDto) {
         log.info("Endpoint: Creating role: {}", roleDto);
         ResponseModel<String> response = userService.saveRole(roleDto);
