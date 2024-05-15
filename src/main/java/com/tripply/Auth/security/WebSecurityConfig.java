@@ -24,16 +24,24 @@ public class WebSecurityConfig {
     @Autowired
     private AuthenticationProvider authenticationProvider;
 
+    private static final String[] whiteListAPI = {
+            "/user/register",
+            "/login",
+            "/user/createRole",
+            "/user/register/client",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/swagger-resources"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(req -> req.requestMatchers("/user/register").permitAll()
-                                .requestMatchers("/login").permitAll()
-                                .requestMatchers("/user/createRole").permitAll()
-                        .requestMatchers("/user/register/client").permitAll()
-                                .anyRequest()
-                                .authenticated())
+                .authorizeHttpRequests(req -> req
+                        .requestMatchers(whiteListAPI).permitAll()
+                        .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

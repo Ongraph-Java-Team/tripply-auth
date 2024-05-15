@@ -4,6 +4,9 @@ import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.service.AuthService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,12 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
+    @Tag(name = "GET", description = "GET method to get user's token details")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "401", description = "Invalid email or password entered"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
     @PostMapping(value = "/login", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseModel<AuthenticationResponse>> login(@Valid @RequestBody LoginRequest request) {
         log.info("Endpoint: login request: {}", request);
