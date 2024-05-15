@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -25,7 +24,7 @@ public class UserController {
     private UserService userService;
 
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public  ResponseEntity<ResponseModel<String>> registerUser(@Validated @RequestBody UserDto userDto) {
+    public  ResponseEntity<ResponseModel<String>> registerUser(@Valid @RequestBody UserDto userDto) {
         log.info("Endpoint: Registering user: {}", userDto);
         ResponseModel<String> response = userService.saveUser(userDto);
         log.info("Endpoint: Registered user: {}", userDto);
@@ -41,7 +40,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/register/client", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResponseModel<String>> registerClient(@Validated @RequestBody InviteRequest inviteRequest) {
+    public ResponseEntity<ResponseModel<String>> registerClient(@Valid @RequestBody InviteRequest inviteRequest) {
         log.info("Endpoint: Registering client {}", inviteRequest);
         ResponseModel<String> response =  userService.registerClient(inviteRequest);
         log.info("Endpoint: Registered client {}", inviteRequest);

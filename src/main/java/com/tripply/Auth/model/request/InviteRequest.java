@@ -15,4 +15,5 @@ public class InviteRequest {
     @NotNull(message = "Invite Id can not be null")
     private String inviteId;
     private String inviteeEmail;
+    private String password;
 }

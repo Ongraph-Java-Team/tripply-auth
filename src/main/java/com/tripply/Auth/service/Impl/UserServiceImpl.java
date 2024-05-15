@@ -122,7 +122,7 @@ public class UserServiceImpl implements UserService {
             if (!Objects.nonNull(invitationResponse)) {
                 throw new RecordNotFoundException("Invitation details not found");
             }
-            saveUserInDB(invitationResponse);
+            saveUserInDB(invitationResponse, inviteRequest);
             response.setMessage("Hotel onboarded successfully");
             response.setStatus(HttpStatus.CREATED);
         } catch (FailToSaveException e) {
@@ -168,7 +168,7 @@ public class UserServiceImpl implements UserService {
         return responseData;
     }
 
-    private void saveUserInDB(JsonObject invitationResponse) {
+    private void saveUserInDB(JsonObject invitationResponse, InviteRequest inviteRequest) {
         JsonObject managerDetails = invitationResponse.getAsJsonObject("hotelRequest")
                 .getAsJsonObject("managerDetails");
 
@@ -181,11 +181,12 @@ public class UserServiceImpl implements UserService {
         user.setEmail(managerDetails.get("email").getAsString());
         user.setCountryCode(managerDetails.get("countryCode").getAsString());
         user.setPhoneNumber(managerDetails.get("phoneNumber").getAsString());
+        user.setPassword(getEncryptedPassword(inviteRequest.getPassword()));
         user.setRole(UserRole.CLIENT_ADMIN);
         log.info("saving user.. ");
 
-        Optional<User> existuser = userRepository.findByEmailOrPhone(user.getEmail(), user.getPhoneNumber());
-        if (existuser.isPresent()) {
+        Optional<User> userExists = userRepository.findByEmailOrPhone(user.getEmail(), user.getPhoneNumber());
+        if (userExists.isPresent()) {
             throw new BadRequestException("This User already exists");
         }
         try {
