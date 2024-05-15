@@ -6,6 +6,7 @@ import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.InviteRequest;
 import com.tripply.Auth.model.response.UserResponse;
 import com.tripply.Auth.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,8 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Operation(summary = "Register an user",
+            description = "This API will register the user, if user email already exist it will throw User already exists message.")
     @PostMapping(value = "/register", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public  ResponseEntity<ResponseModel<String>> registerUser(@Valid @RequestBody UserDto userDto) {
         log.info("Endpoint: Registering user: {}", userDto);
@@ -31,6 +34,8 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Create a role",
+            description = "This API will create a role with name, if role already exist it will throw Role already exists message.")
     @PostMapping(value = "/create-role", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public  ResponseEntity<ResponseModel<String>> createRole(@Valid @RequestBody RoleDto roleDto) {
         log.info("Endpoint: Creating role: {}", roleDto);
@@ -39,6 +44,8 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Register a client user",
+            description = "This API will register a client user with inviteeId and password details.")
     @PostMapping(value = "/register/client", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResponseModel<String>> registerClient(@Valid @RequestBody InviteRequest inviteRequest) {
         log.info("Endpoint: Registering client {}", inviteRequest);
