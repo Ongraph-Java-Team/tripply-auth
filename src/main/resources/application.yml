@@ -5,10 +5,13 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/tripply?currentSchema=identity
+    url: jdbc:postgresql://localhost:5433/tripply
     username: postgres
-    password: root
+    password: postgres
     driver-class-name: org.postgresql.Driver
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.xml
 
   jpa:
     properties:
@@ -22,7 +25,3 @@ application:
     base-url: http://localhost:8087
   booking:
     base-url: http://localhost:8085
-
-
-
-
