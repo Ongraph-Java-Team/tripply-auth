@@ -44,7 +44,9 @@ public class AuthServiceImpl implements AuthService {
 
         final String token = jwtUtil.generateToken(user);
         long expirationDate = jwtUtil.getExpirationTime();
-        response.setData(new AuthenticationResponse(token, expirationDate));
+        AuthenticationResponse authResponse = new AuthenticationResponse(token, expirationDate);
+        authResponse.setRole(user.getRole());
+        response.setData(authResponse);
         response.setMessage("Retrieved token details successfully.");
         response.setStatus(HttpStatus.OK);
 

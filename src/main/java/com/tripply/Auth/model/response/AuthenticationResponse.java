@@ -1,6 +1,7 @@
 package com.tripply.Auth.model.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tripply.Auth.constants.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +23,9 @@ public class AuthenticationResponse {
 
     @JsonProperty("expires_in")
     private long expiresIn;
+
+    @JsonProperty("role")
+    private UserRole role;
 
     public AuthenticationResponse(String accessToken, long expiresIn) {
         super();
