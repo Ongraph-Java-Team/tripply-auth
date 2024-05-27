@@ -241,7 +241,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseModel<?> getInviteeDetailsById(String inviteeId) {
+    public ResponseModel<InvitationDetailResponse> getInviteeDetailsById(String inviteeId) {
         log.info("Get invite details by inviteId: {}", inviteeId);
         try {
             String inviteServiceUri = UriComponentsBuilder

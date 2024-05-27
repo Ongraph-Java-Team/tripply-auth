@@ -4,6 +4,7 @@ import com.tripply.Auth.dto.RoleDto;
 import com.tripply.Auth.dto.UserDto;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.InviteRequest;
+import com.tripply.Auth.model.response.InvitationDetailResponse;
 import com.tripply.Auth.model.response.UserResponse;
 
 import java.util.UUID;
@@ -18,6 +19,6 @@ public interface UserService {
 
     ResponseModel<UserResponse> getUserById(UUID id);
 
-    ResponseModel<?> getInviteeDetailsById(String id);
+    ResponseModel<InvitationDetailResponse> getInviteeDetailsById(String id);
 
 }
