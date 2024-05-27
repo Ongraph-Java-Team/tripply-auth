@@ -61,4 +61,13 @@ public class UserController {
         log.info("Endpoint: Got User {}", id);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping(value = "/invitee/{id}")
+    public ResponseEntity<ResponseModel<?>> getInviteeDetailsById(@PathVariable String id) {
+        log.info("Endpoint: Getting user {}", id);
+        ResponseModel<?> response = userService.getInviteeDetailsById(id);
+        log.info("Endpoint: Got User {}", id);
+        return ResponseEntity.ok(response);
+    }
+
 }

@@ -29,6 +29,7 @@ public class WebSecurityConfig {
             "/login",
             "/user/createRole",
             "/user/register/client",
+            "/user/invitee/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",

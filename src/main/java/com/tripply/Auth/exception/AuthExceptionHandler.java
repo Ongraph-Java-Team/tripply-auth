@@ -10,6 +10,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -120,6 +121,20 @@ public class AuthExceptionHandler {
                 .errorDesc(ErrorConstant.ER005.getErrorDescription())
                 .build()));
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ResponseModel<String>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        log.error("NoResourceFoundException handled with message: ", ex);
+        ResponseModel<String> errorResponse = new ResponseModel<>();
+        errorResponse.setStatus(HttpStatus.BAD_REQUEST);
+        errorResponse.setTimestamp(LocalDateTime.now());
+        errorResponse.setErrors(List.of(ErrorDetails.builder()
+                .errorCode(ErrorConstant.ER006.getErrorCode())
+                .errorDesc(ErrorConstant.ER006.getErrorDescription())
+                .build()));
+        errorResponse.setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
 }

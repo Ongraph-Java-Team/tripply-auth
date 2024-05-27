@@ -17,4 +17,7 @@ public interface UserService {
     ResponseModel<String> registerClient(InviteRequest inviteRequest);
 
     ResponseModel<UserResponse> getUserById(UUID id);
+
+    ResponseModel<?> getInviteeDetailsById(String id);
+
 }

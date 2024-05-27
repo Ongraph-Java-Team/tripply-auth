@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -28,6 +29,9 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public ResponseModel<AuthenticationResponse> authenticateUser(LoginRequest loginRequest) {
         log.info("AuthService: authenticateUser() started with username -> {}", loginRequest.getEmail());
@@ -38,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = userDetails.get();
-        if (!isCorrectPassword(user.getPassword(), loginRequest.getPassword())) {
+        if (!passwordEncoder.matches(user.getPassword(), loginRequest.getPassword())) {
             throw new BadCredentialsException(ErrorConstant.ER004.getErrorDescription());
         }
 
