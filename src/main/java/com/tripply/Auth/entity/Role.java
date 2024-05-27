@@ -14,9 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "role", schema = "identity")
-public class Role extends BaseEntity implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class Role extends BaseEntity {
 
     @Column(name="role_name")
     private String roleName;

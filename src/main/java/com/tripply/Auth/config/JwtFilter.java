@@ -1,11 +1,14 @@
 package com.tripply.Auth.config;
 
+import com.tripply.Auth.constants.UserRole;
+import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.util.JwtUtil;
 import io.micrometer.common.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,6 +24,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import java.io.IOException;
 
 @Service
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -32,11 +36,19 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Autowired
+    private AuthService authService;
+
+    @Autowired
+    private LoggedInUser loggedInUser;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
+
+        log.info(String.valueOf(request.getRequestURL()));
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -47,10 +59,20 @@ public class JwtFilter extends OncePerRequestFilter {
             final String jwt = authHeader.substring(7);
             final String userEmail = jwtUtil.extractUsername(jwt);
 
+            if (authService.checkTokenIsBlocked(jwt)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("Access Denied, Token is blocked");
+                return;
+            }
+
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (userEmail != null && authentication == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+                loggedInUser.setUserName(userDetails.getUsername());
+                loggedInUser.setRole(UserRole.REGULAR_USER);
 
                 if (jwtUtil.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

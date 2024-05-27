@@ -7,4 +7,8 @@ import com.tripply.Auth.model.ResponseModel;
 public interface AuthService {
 
     ResponseModel<AuthenticationResponse> authenticateUser(LoginRequest request);
+
+    ResponseModel<String> blockToken(String jwt);
+
+    boolean checkTokenIsBlocked(String jwt);
 }
