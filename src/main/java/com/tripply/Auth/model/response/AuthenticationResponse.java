@@ -7,8 +7,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
 @Data
 @Builder
 @AllArgsConstructor
@@ -31,5 +29,11 @@ public class AuthenticationResponse {
         super();
         this.accessToken = accessToken;
         this.expiresIn = expiresIn;
+    }
+
+    public AuthenticationResponse(String accessToken, long expiresIn, String refreshToken) {
+        this.accessToken = accessToken;
+        this.expiresIn = expiresIn;
+        this.refreshToken = refreshToken;
     }
 }
