@@ -5,8 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.*;
 
-import java.io.Serializable;
-
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Builder

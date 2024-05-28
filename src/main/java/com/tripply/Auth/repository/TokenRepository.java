@@ -1,9 +1,7 @@
 package com.tripply.Auth.repository;
 
-import com.tripply.Auth.entity.Role;
 import com.tripply.Auth.entity.Token;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.UUID;
