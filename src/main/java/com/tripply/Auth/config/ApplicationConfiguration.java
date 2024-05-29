@@ -1,7 +1,6 @@
 package com.tripply.Auth.config;
 
 import com.tripply.Auth.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
