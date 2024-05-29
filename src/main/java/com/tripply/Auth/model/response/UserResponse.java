@@ -1,6 +1,5 @@
 package com.tripply.Auth.model.response;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
