@@ -21,8 +21,12 @@ import java.util.UUID;
 @RequestMapping("/user")
 public class UserController {
 
+    private final UserService userService;
+
     @Autowired
-    private UserService userService;
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
 
     @Operation(summary = "Register an user",
             description = "This API will register the user, if user email already exist it will throw User already exists message.")
