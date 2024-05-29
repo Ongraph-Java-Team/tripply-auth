@@ -1,13 +1,13 @@
 package com.tripply.Auth.service.Impl;
 
 import com.tripply.Auth.constants.ErrorConstant;
-import com.tripply.Auth.entity.Token;
+import com.tripply.Auth.entity.BlackListToken;
 import com.tripply.Auth.entity.User;
 import com.tripply.Auth.exception.BadCredentialsException;
 import com.tripply.Auth.exception.BadRequestException;
 import com.tripply.Auth.exception.FailToSaveException;
 import com.tripply.Auth.exception.RecordNotFoundException;
-import com.tripply.Auth.repository.TokenRepository;
+import com.tripply.Auth.repository.BlackListTokenRepository;
 import com.tripply.Auth.repository.UserRepository;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
@@ -15,7 +15,6 @@ import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,14 +25,15 @@ import java.util.Optional;
 @Slf4j
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
+    private final BlackListTokenRepository tokenRepository;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private TokenRepository tokenRepository;
+    public AuthServiceImpl(JwtUtil jwtUtil, UserRepository userRepository, BlackListTokenRepository tokenRepository) {
+        this.jwtUtil = jwtUtil;
+        this.userRepository = userRepository;
+        this.tokenRepository = tokenRepository;
+    }
 
     @Override
     public ResponseModel<AuthenticationResponse> authenticateUser(LoginRequest loginRequest) {
@@ -65,12 +65,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ResponseModel<String> blockToken(String jwt) {
         log.info("AuthService: blockToken() started with jwt -> {}", jwt);
-        Token token = tokenRepository.findByBlockedToken(jwt);
+        BlackListToken token = tokenRepository.findByTokenValue(jwt);
         if (token != null) {
             throw new BadRequestException("Token is already blocked");
         }
-        Token newToken = new Token();
-        newToken.setBlockedToken(jwt);
+        BlackListToken newToken = new BlackListToken();
+        newToken.setTokenValue(jwt);
         newToken.setExpirationTime(0);
         try {
             tokenRepository.save(newToken);
@@ -88,7 +88,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean checkTokenIsBlocked(String jwt) {
         log.info("AuthService: checkTokenIsBlocked() started with jwt -> {}", jwt);
-        Token token = tokenRepository.findByBlockedToken(jwt);
+        BlackListToken token = tokenRepository.findByTokenValue(jwt);
         if (token == null) {
             return false;
         }

@@ -11,11 +11,11 @@ import lombok.*;
 @Entity
 @EqualsAndHashCode(callSuper = false)
 @Builder
-@Table(name = "token", schema = "identity")
-public class Token extends BaseEntity{
+@Table(name = "blackListToken", schema = "identity")
+public class BlackListToken extends BaseEntity{
 
-    @Column(name="blocked_token")
-    private String blockedToken;
+    @Column(name="token_value", length = 1000)
+    private String tokenValue;
 
     @Column(name="expires_in")
     private long expirationTime;

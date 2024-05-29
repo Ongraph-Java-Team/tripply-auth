@@ -25,20 +25,23 @@ import java.io.IOException;
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private HandlerExceptionResolver handlerExceptionResolver;
+    private final HandlerExceptionResolver handlerExceptionResolver;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
+    private final AuthService authService;
+    private final LoggedInUser loggedInUser;
 
-    @Autowired
-    private JwtUtil jwtUtil;
-
-    @Autowired
-    private UserDetailsService userDetailsService;
-
-    @Autowired
-    private AuthService authService;
-
-    @Autowired
-    private LoggedInUser loggedInUser;
+    public JwtFilter(HandlerExceptionResolver handlerExceptionResolver,
+                     JwtUtil jwtUtil,
+                     UserDetailsService userDetailsService,
+                     AuthService authService,
+                     LoggedInUser loggedInUser) {
+        this.handlerExceptionResolver = handlerExceptionResolver;
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
+        this.authService = authService;
+        this.loggedInUser = loggedInUser;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,

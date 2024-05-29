@@ -17,16 +17,18 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    @Autowired
-    private JwtFilter jwtFilter;
+    private final JwtFilter jwtFilter;
+    private final AuthenticationProvider authenticationProvider;
 
-    @Autowired
-    private AuthenticationProvider authenticationProvider;
+    public WebSecurityConfig(JwtFilter jwtFilter, AuthenticationProvider authenticationProvider) {
+        this.jwtFilter = jwtFilter;
+        this.authenticationProvider = authenticationProvider;
+    }
 
     private static final String[] whiteListAPI = {
             "/user/register",
             "/login",
-            "/user/createRole",
+            "/user/create-role",
             "/user/register/client",
             "/swagger-ui/**",
             "/v3/api-docs/**",

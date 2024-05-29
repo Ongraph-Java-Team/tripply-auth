@@ -19,8 +19,11 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class AuthController {
 
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @Tag(name = "GET", description = "GET method to get user's token details")
     @ApiResponses(value = {
