@@ -32,7 +32,7 @@ public class JwtUtil {
     }
 
     public String generateToken(User user) {
-        HashMap<String, Object> extraClaims = new HashMap<>();
+        Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("firstName", user.getFirstName());
         extraClaims.put("familyName", user.getLastName());
         extraClaims.put("userId", user.getId());
