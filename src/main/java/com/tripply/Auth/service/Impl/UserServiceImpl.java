@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.tripply.Auth.config.WebClientService;
 import com.tripply.Auth.constants.UserRole;
 import com.tripply.Auth.dto.*;
 import com.tripply.Auth.entity.Role;
@@ -13,6 +14,7 @@ import com.tripply.Auth.exception.FailToSaveException;
 import com.tripply.Auth.exception.RecordNotFoundException;
 import com.tripply.Auth.exception.ServiceCommunicationException;
 import com.tripply.Auth.model.request.InviteRequest;
+import com.tripply.Auth.model.request.UserRequest;
 import com.tripply.Auth.model.response.UserResponse;
 import com.tripply.Auth.repository.RoleRepository;
 import com.tripply.Auth.repository.UserRepository;
@@ -21,6 +23,7 @@ import com.tripply.Auth.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,12 +31,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.*;
 
-import static com.tripply.Auth.constants.AuthConstants.GET_NOTIFICATION_URL;
-import static com.tripply.Auth.constants.AuthConstants.ONBOARD_HOTEL;
+import static com.tripply.Auth.constants.AuthConstants.*;
 
 @Service
 @Slf4j
@@ -48,11 +51,17 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private WebClientService webClientService;
+
     @Value("${application.notification.base-url}")
     private String baseUrl;
 
     @Value("${application.booking.base-url}")
     private String baseBookingUrl;
+
+    @Value("${application.notification.base-url}")
+    private String notificationBaseUrl;
 
     @Override
     public ResponseModel<String> saveUser(UserDto userDto) {
@@ -78,16 +87,12 @@ public class UserServiceImpl implements UserService {
             log.info("saved user {}", user);
             responseModel.setMessage("User added successfully");
             responseModel.setStatus(HttpStatus.CREATED);
-
+            sendEmailToUser(user);
         } catch (FailToSaveException e) {
             throw new FailToSaveException("Error while saving user", e);
         }
 
         return responseModel;
-    }
-
-    private String getEncryptedPassword( String password) {
-        return passwordEncoder.encode(password);
     }
 
     @Override
@@ -283,5 +288,45 @@ public class UserServiceImpl implements UserService {
         responseModel.setData(userResponse);
         responseModel.setMessage("User found");
         return responseModel;
+    }
+
+    @Override
+    public ResponseModel<String> updateUser(String userEmail) {
+        Optional<User> userOptional = userRepository.findByEmail(userEmail);
+        ResponseModel<String> response = new ResponseModel<>();
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setEnabled(true);
+            userRepository.save(user);
+            response.setStatus(HttpStatus.OK);
+            response.setMessage("User updated successfully");
+        } else {
+            response.setStatus(HttpStatus.BAD_REQUEST);
+            response.setMessage("User not found");
+        }
+        return response;
+    }
+
+    private void sendEmailToUser(User user){
+        log.info("Begin sendMail() for the request: {} ", user.getFirstName());
+        try {
+            UserRequest userRequest = new UserRequest();
+            userRequest.setSendToName(user.getFirstName());
+            userRequest.setSentToEmail(user.getEmail());
+            webClientService.postWithParameterizedTypeReference(notificationBaseUrl + SEND_REGISTRATION_EMAIL_URL,
+                    userRequest,
+                    new ParameterizedTypeReference<>() {
+                    });
+        } catch (WebClientResponseException.BadRequest e) {
+            log.error("Bad request error while sending email to user", e);
+            throw new BadRequestException("Error occurred while sending email. Notification service responded with a bad request.");
+        } catch (ResourceAccessException e) {
+            log.error("Network error while sending therapist invite", e);
+            throw new ServiceCommunicationException("Network error occurred while calling to notification service");
+        }
+    }
+
+    private String getEncryptedPassword( String password) {
+        return passwordEncoder.encode(password);
     }
 }

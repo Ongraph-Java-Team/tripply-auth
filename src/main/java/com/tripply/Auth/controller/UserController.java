@@ -61,4 +61,13 @@ public class UserController {
         log.info("Endpoint: Got User {}", id);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/confirm/registration")
+    public ResponseEntity<ResponseModel<String>> confirmUserAccount(@RequestParam("inviteeEmail") String userEmail) {
+        log.info("Start Endpoint: confirming user account {}", userEmail);
+        ResponseModel<String> response = userService.updateUser(userEmail);
+        log.info("End Endpoint: confirmed user account {}", userEmail);
+        return ResponseEntity.ok(response);
+    }
+
 }
