@@ -1,12 +1,12 @@
 package com.tripply.Auth.util;
 
+import com.tripply.Auth.constants.UserRole;
+import com.tripply.Auth.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 import io.jsonwebtoken.io.Decoders;
@@ -31,8 +31,13 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateToken(User user) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("firstName", user.getFirstName());
+        extraClaims.put("familyName", user.getLastName());
+        extraClaims.put("userId", user.getId());
+        extraClaims.put("roles", new UserRole[]{user.getRole()});
+        return generateToken(extraClaims, user);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
