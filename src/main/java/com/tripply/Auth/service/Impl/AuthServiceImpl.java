@@ -47,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = userDetails.get();
-        if (!passwordEncoder.matches(user.getPassword(), loginRequest.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new BadCredentialsException(ErrorConstant.ER004.getErrorDescription());
         }
 
