@@ -12,9 +12,6 @@ import static com.tripply.Auth.constants.AuthConstants.BEARER;
 @Component
 public class WebClientService {
 
-//    @Autowired
-//    private WebClient webClient;
-
     private final WebClient webClient;
 
     @Autowired
