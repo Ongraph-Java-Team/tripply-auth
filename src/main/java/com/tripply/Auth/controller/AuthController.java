@@ -50,4 +50,13 @@ public class AuthController {
         log.info("Endpoint: logout response");
         return ResponseEntity.ok(response);
     }
+
+
+    @PostMapping("/refreshToken")
+    public ResponseEntity<ResponseModel<AuthenticationResponse>> getRefreshToken(@RequestParam String refreshToken) {
+        log.info("Endpoint: getExchangeToken request: {}", refreshToken);
+        ResponseModel<AuthenticationResponse> response = new ResponseModel<>();
+        response= authService.getRefreshToken(refreshToken);
+        return ResponseEntity.ok(response);
+    }
 }

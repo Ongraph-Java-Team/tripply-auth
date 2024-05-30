@@ -11,4 +11,6 @@ public interface AuthService {
     ResponseModel<String> blockToken(String jwt);
 
     boolean checkTokenIsBlocked(String jwt);
+
+    ResponseModel<AuthenticationResponse> getRefreshToken(String jwt);
 }
