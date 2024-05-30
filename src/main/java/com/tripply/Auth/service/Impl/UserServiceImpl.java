@@ -21,7 +21,6 @@ import com.tripply.Auth.service.UserService;
 import com.tripply.Auth.service.WebClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -46,11 +45,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final WebClientService webClient;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, WebClientService webClient) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.webClient = webClient;
     }
 
     @Value("${application.notification.base-url}")
@@ -58,9 +59,6 @@ public class UserServiceImpl implements UserService {
 
     @Value("${application.booking.base-url}")
     private String baseBookingUrl;
-
-    @Autowired
-    private WebClientService webClient;
 
     @Override
     public ResponseModel<String> saveUser(UserDto userDto) {
@@ -140,8 +138,8 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
-
-    private ResponseModel<InvitationDetailResponse> getInvitationDetails(String inviteeId) {
+    @Override
+    public ResponseModel<InvitationDetailResponse> getInvitationDetails(String inviteeId) {
         log.info("Get invite details by inviteId: {}", inviteeId);
         try {
             String inviteServiceUri = UriComponentsBuilder
@@ -239,30 +237,6 @@ public class UserServiceImpl implements UserService {
         responseModel.setData(userResponse);
         responseModel.setMessage("User found");
         return responseModel;
-    }
-
-    @Override
-    public ResponseModel<InvitationDetailResponse> getInviteeDetailsById(String inviteeId) {
-        log.info("Get invite details by inviteId: {}", inviteeId);
-        try {
-            String inviteServiceUri = UriComponentsBuilder
-                    .fromHttpUrl(baseUrl + GET_NOTIFICATION_URL + "/" + inviteeId)
-                    .buildAndExpand(inviteeId)
-                    .toUriString();
-            return webClient.getWithParameterizedTypeReference(inviteServiceUri,
-                    new ParameterizedTypeReference<>() {
-                    },
-                    DUMMY_TOKEN);
-        } catch (WebClientResponseException.BadRequest e) {
-            log.error("Bad request error while getting invitee details", e);
-            throw new BadRequestException("Invitee not found");
-        } catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("Error while sending therapist invite", e);
-            throw new ServiceCommunicationException("Error occurred while calling notification service");
-        } catch (ResourceAccessException e) {
-            log.error("Network error while getting invitee details", e);
-            throw new ServiceCommunicationException("Network error occurred while calling to notification service");
-        }
     }
 
 }

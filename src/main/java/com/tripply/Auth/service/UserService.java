@@ -19,6 +19,6 @@ public interface UserService {
 
     ResponseModel<UserResponse> getUserById(UUID id);
 
-    ResponseModel<InvitationDetailResponse> getInviteeDetailsById(String id);
+    ResponseModel<InvitationDetailResponse> getInvitationDetails(String id);
 
 }

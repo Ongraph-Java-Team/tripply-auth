@@ -70,7 +70,7 @@ public class UserController {
     @GetMapping(value = "/invitee/{id}")
     public ResponseEntity<ResponseModel<InvitationDetailResponse>> getInviteeDetailsById(@PathVariable String id) {
         log.info("Endpoint: Getting user {}", id);
-        ResponseModel<InvitationDetailResponse> response = userService.getInviteeDetailsById(id);
+        ResponseModel<InvitationDetailResponse> response = userService.getInvitationDetails(id);
         log.info("Endpoint: Got User {}", id);
         return ResponseEntity.ok(response);
     }

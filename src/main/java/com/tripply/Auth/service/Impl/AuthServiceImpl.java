@@ -7,16 +7,15 @@ import com.tripply.Auth.exception.BadCredentialsException;
 import com.tripply.Auth.exception.BadRequestException;
 import com.tripply.Auth.exception.FailToSaveException;
 import com.tripply.Auth.exception.RecordNotFoundException;
-import com.tripply.Auth.repository.BlackListTokenRepository;
-import com.tripply.Auth.repository.UserRepository;
+import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
-import com.tripply.Auth.model.ResponseModel;
+import com.tripply.Auth.repository.BlackListTokenRepository;
+import com.tripply.Auth.repository.UserRepository;
 import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,15 +28,14 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final BlackListTokenRepository tokenRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthServiceImpl(JwtUtil jwtUtil, UserRepository userRepository, BlackListTokenRepository tokenRepository) {
+    public AuthServiceImpl(JwtUtil jwtUtil, UserRepository userRepository, BlackListTokenRepository tokenRepository, PasswordEncoder passwordEncoder) {
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
+        this.passwordEncoder = passwordEncoder;
     }
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Override
     public ResponseModel<AuthenticationResponse> authenticateUser(LoginRequest loginRequest) {
@@ -100,8 +98,4 @@ public class AuthServiceImpl implements AuthService {
         return true;
     }
 
-    private boolean isCorrectPassword(String encodedPass, String inputPass) {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        return encoder.matches(inputPass, encodedPass);
-    }
 }
