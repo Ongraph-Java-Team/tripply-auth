@@ -101,7 +101,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ResponseModel<AuthenticationResponse> getRefreshToken(String refreshToken) {
-        log.info("AuthService: getExchangeToken() started with jwt -> {}", refreshToken);
+        log.info("AuthService: getRefreshToken() started with jwt -> {}", refreshToken);
         if(refreshToken==null || jwtUtil.isTokenExpired(refreshToken)) {
             throw new BadRequestException("Invalid refresh token");
         }
@@ -115,7 +115,7 @@ public class AuthServiceImpl implements AuthService {
         response.setData(authResponse);
         response.setMessage("Retrieved token details successfully.");
         response.setStatus(HttpStatus.OK);
-        log.info("AuthService: getExchangeToken() ended with token -> {}", refreshToken);
+        log.info("AuthService: getRefreshToken() ended with token -> {}", refreshToken);
         return response;
     }
 
