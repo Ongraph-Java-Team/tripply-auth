@@ -4,6 +4,7 @@ import com.tripply.Auth.dto.RoleDto;
 import com.tripply.Auth.dto.UserDto;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.InviteRequest;
+import com.tripply.Auth.model.response.InvitationDetailResponse;
 import com.tripply.Auth.model.response.UserResponse;
 import com.tripply.Auth.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -65,6 +66,15 @@ public class UserController {
         log.info("Endpoint: Got User {}", id);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping(value = "/invitee/{id}")
+    public ResponseEntity<ResponseModel<InvitationDetailResponse>> getInviteeDetailsById(@PathVariable String id) {
+        log.info("Endpoint: Getting user {}", id);
+        ResponseModel<InvitationDetailResponse> response = userService.getInvitationDetails(id);
+        log.info("Endpoint: Got User {}", id);
+        return ResponseEntity.ok(response);
+    }
+
 
     @GetMapping("/confirm/registration")
     public ResponseEntity<ResponseModel<String>> confirmUserAccount(@RequestParam("inviteeEmail") String userEmail) {

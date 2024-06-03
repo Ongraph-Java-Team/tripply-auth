@@ -4,10 +4,12 @@ server:
     context-path: /auth
 
 spring:
+  application:
+    name: auth
   datasource:
-    url: jdbc:postgresql://localhost:5433/tripply
+    url: jdbc:postgresql://localhost:5432/tripply
     username: postgres
-    password: postgres
+    password: root
     driver-class-name: org.postgresql.Driver
   liquibase:
     enabled: true
@@ -22,8 +24,17 @@ spring:
 
 application:
   notification:
-    base-url: http://localhost:8087
+    base-url: http://NOTIFICATION
   booking:
-    base-url: http://localhost:8085
+    base-url: http://BOOKING
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    hostname: localhost
 
 #swagger-url: http://localhost:8082/auth/swagger-ui/index.html

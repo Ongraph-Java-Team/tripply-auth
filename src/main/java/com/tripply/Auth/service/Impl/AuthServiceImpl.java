@@ -7,16 +7,16 @@ import com.tripply.Auth.exception.BadCredentialsException;
 import com.tripply.Auth.exception.BadRequestException;
 import com.tripply.Auth.exception.FailToSaveException;
 import com.tripply.Auth.exception.RecordNotFoundException;
-import com.tripply.Auth.repository.BlackListTokenRepository;
-import com.tripply.Auth.repository.UserRepository;
+import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
-import com.tripply.Auth.model.ResponseModel;
+import com.tripply.Auth.repository.BlackListTokenRepository;
+import com.tripply.Auth.repository.UserRepository;
 import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -28,11 +28,13 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final BlackListTokenRepository tokenRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public AuthServiceImpl(JwtUtil jwtUtil, UserRepository userRepository, BlackListTokenRepository tokenRepository) {
+    public AuthServiceImpl(JwtUtil jwtUtil, UserRepository userRepository, BlackListTokenRepository tokenRepository, PasswordEncoder passwordEncoder) {
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -45,21 +47,27 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = userDetails.get();
-        if (!isCorrectPassword(user.getPassword(), loginRequest.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new BadCredentialsException(ErrorConstant.ER004.getErrorDescription());
         }
 
-        final String token = jwtUtil.generateToken(user);
-        long expirationDate = jwtUtil.getExpirationTime();
-        final String refreshToken = jwtUtil.generateRefreshToken(user);
-        AuthenticationResponse authResponse = new AuthenticationResponse(token, expirationDate, refreshToken);
-        authResponse.setRole(user.getRole());
-        response.setData(authResponse);
-        response.setMessage("Retrieved token details successfully.");
-        response.setStatus(HttpStatus.OK);
+        if (user.isEnabled()){
+            final String token = jwtUtil.generateToken(user);
+            long expirationDate = jwtUtil.getExpirationTime();
+            final String refreshToken = jwtUtil.generateRefreshToken(user);
+            AuthenticationResponse authResponse = new AuthenticationResponse(token, expirationDate, refreshToken);
+            authResponse.setRole(user.getRole());
+            response.setData(authResponse);
+            response.setMessage("Retrieved token details successfully.");
+            response.setStatus(HttpStatus.OK);
 
-        log.info("AuthService: authenticateUser() ended with username -> {}", loginRequest.getEmail());
-        return response;
+            log.info("AuthService: authenticateUser() ended with username -> {}", loginRequest.getEmail());
+            return response;
+        } else {
+            response.setMessage("Please verify your Account");
+            response.setStatus(HttpStatus.UNAUTHORIZED);
+            return response;
+        }
     }
 
     @Override
@@ -96,8 +104,4 @@ public class AuthServiceImpl implements AuthService {
         return true;
     }
 
-    private boolean isCorrectPassword(String encodedPass, String inputPass) {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        return encoder.matches(inputPass, encodedPass);
-    }
 }

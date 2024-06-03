@@ -1,26 +1,27 @@
 package com.tripply.Auth.service.Impl;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.tripply.Auth.config.WebClientService;
 import com.tripply.Auth.constants.UserRole;
-import com.tripply.Auth.dto.*;
+import com.tripply.Auth.dto.HotelDto;
+import com.tripply.Auth.dto.ManagerDetails;
+import com.tripply.Auth.dto.RoleDto;
+import com.tripply.Auth.dto.UserDto;
 import com.tripply.Auth.entity.Role;
 import com.tripply.Auth.entity.User;
 import com.tripply.Auth.exception.BadRequestException;
 import com.tripply.Auth.exception.FailToSaveException;
 import com.tripply.Auth.exception.RecordNotFoundException;
 import com.tripply.Auth.exception.ServiceCommunicationException;
+import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.InviteRequest;
+import com.tripply.Auth.model.response.InvitationDetailResponse;
 import com.tripply.Auth.model.request.UserRequest;
 import com.tripply.Auth.model.response.UserResponse;
 import com.tripply.Auth.repository.RoleRepository;
 import com.tripply.Auth.repository.UserRepository;
-import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.service.UserService;
+import com.tripply.Auth.service.WebClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -29,11 +30,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 import static com.tripply.Auth.constants.AuthConstants.*;
 
@@ -44,15 +46,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final WebClientService webClient;
 
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder, WebClientService webClient) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.webClient = webClient;
     }
-
-    @Autowired
-    private WebClientService webClientService;
 
     @Value("${application.notification.base-url}")
     private String baseUrl;
@@ -95,6 +96,10 @@ public class UserServiceImpl implements UserService {
         return responseModel;
     }
 
+    private String getEncryptedPassword( String password) {
+        return passwordEncoder.encode(password);
+    }
+
     @Override
     public ResponseModel<String> saveRole(RoleDto roleDto) {
         log.info("saving role {}", roleDto);
@@ -123,8 +128,8 @@ public class UserServiceImpl implements UserService {
 
         try {
             log.info("Getting invitation data: {}", inviteRequest);
-            JsonObject invitationResponse = getInvitationDetails(inviteRequest);
-            if (!Objects.nonNull(invitationResponse)) {
+            ResponseModel<InvitationDetailResponse> invitationResponse = getInvitationDetails(inviteRequest.getInviteId());
+            if (Objects.isNull(invitationResponse)) {
                 throw new RecordNotFoundException("Invitation details not found");
             }
             saveUserInDB(invitationResponse, inviteRequest);
@@ -137,55 +142,38 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
-
-    private JsonObject getInvitationDetails(InviteRequest inviteRequest) {
-        log.info("Get invite details by inviteId: {}", inviteRequest.getInviteId());
-        JsonObject responseData = null;
+    @Override
+    public ResponseModel<InvitationDetailResponse> getInvitationDetails(String inviteeId) {
+        log.info("Get invite details by inviteId: {}", inviteeId);
         try {
             String inviteServiceUri = UriComponentsBuilder
-                    .fromHttpUrl(baseUrl + GET_NOTIFICATION_URL + "/" + inviteRequest.getInviteId())
-                    .buildAndExpand(inviteRequest.getInviteId())
+                    .fromHttpUrl(baseUrl + GET_NOTIFICATION_URL + "/" + inviteeId)
+                    .buildAndExpand(inviteeId)
                     .toUriString();
-
-            WebClient.ResponseSpec responseSpec = WebClient.create()
-                    .get()
-                    .uri(inviteServiceUri)
-                    .retrieve();
-
-            String responseBody = responseSpec.bodyToMono(String.class).block();
-            if (responseBody != null) {
-                JsonElement jsonElement = JsonParser.parseString(responseBody);
-                if (jsonElement.isJsonObject()) {
-                    JsonObject jsonObject = jsonElement.getAsJsonObject();
-                    JsonElement dataElement = jsonObject.get("data");
-                    if (dataElement != null && dataElement.isJsonObject()) {
-                        responseData = dataElement.getAsJsonObject();
-                    }
-                }
-            }
+            return webClient.getWithParameterizedTypeReference(inviteServiceUri,
+                    new ParameterizedTypeReference<>() {
+                    },
+                    DUMMY_TOKEN);
+        } catch (WebClientResponseException.BadRequest e) {
+            log.error("Bad request error while getting invitee details", e);
+            throw new BadRequestException("Invitee not found");
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            log.error("Error while calling notification service", e);
+            log.error("Error while sending therapist invite", e);
             throw new ServiceCommunicationException("Error occurred while calling notification service");
         } catch (ResourceAccessException e) {
-            log.error("Network error while getting data from notification service", e);
+            log.error("Network error while getting invitee details", e);
             throw new ServiceCommunicationException("Network error occurred while calling to notification service");
         }
-        return responseData;
     }
 
-    private void saveUserInDB(JsonObject invitationResponse, InviteRequest inviteRequest) {
-        JsonObject managerDetails = invitationResponse.getAsJsonObject("hotelRequest")
-                .getAsJsonObject("managerDetails");
+    private void saveUserInDB(ResponseModel<InvitationDetailResponse> invitationResponse, InviteRequest inviteRequest) {
+        ManagerDetails managerDetails = invitationResponse.getData().getHotelRequest().getManagerDetails();
 
         if (!Objects.nonNull(managerDetails)) {
             throw new RecordNotFoundException("Manager details not found");
         }
         User user = new User();
-        user.setFirstName(managerDetails.get("firstName").getAsString());
-        user.setLastName(managerDetails.get("lastName").getAsString());
-        user.setEmail(managerDetails.get("email").getAsString());
-        user.setCountryCode(managerDetails.get("countryCode").getAsString());
-        user.setPhoneNumber(managerDetails.get("phoneNumber").getAsString());
+        BeanUtils.copyProperties(managerDetails, user);
         user.setPassword(getEncryptedPassword(inviteRequest.getPassword()));
         user.setRole(UserRole.CLIENT_ADMIN);
         log.info("saving user.. ");
@@ -201,73 +189,38 @@ public class UserServiceImpl implements UserService {
         }
         log.info("saved user {}", user);
 
-        getHotelData(invitationResponse, managerDetails, user);
+        getHotelData(invitationResponse, user);
     }
 
-    private void getHotelData(JsonObject invitationResponse, JsonObject managerDetails, User user) {
-        JsonObject hotelRequest = invitationResponse.getAsJsonObject("hotelRequest");
-        HotelDto hotelDto = new HotelDto();
-        hotelDto.setName(hotelRequest.get("name").getAsString());
-        hotelDto.setRegistrationNumber(hotelRequest.get("registrationNumber").getAsString());
-        hotelDto.setAddress(hotelRequest.get("address").getAsString());
-        hotelDto.setCity(hotelRequest.get("city").getAsString());
-        hotelDto.setStateId(hotelRequest.get("stateId").getAsString());
-        hotelDto.setCountryId(hotelRequest.get("countryId").getAsString());
-        hotelDto.setDescription(hotelRequest.get("description").getAsString());
-        hotelDto.setWebsite(hotelRequest.get("website").getAsString());
-
-        JsonObject hotelRequestObject = invitationResponse.getAsJsonObject("hotelRequest");
-
-        JsonArray amenitiesArray = hotelRequestObject.getAsJsonArray("amenities");
-
-        List<Amenity> amenities = new ArrayList<>();
-        for (JsonElement amenityElement : amenitiesArray) {
-            JsonObject amenityObject = amenityElement.getAsJsonObject();
-            String name = amenityObject.get("name").getAsString();
-            String description = amenityObject.get("description").getAsString();
-            Amenity amenity = new Amenity();
-            amenity.setName(name);
-            amenity.setDescription(description);
-            amenities.add(amenity);
-        }
-        hotelDto.setAmenities(amenities);
-
-        ManagerDetails managerDetails1 = new ManagerDetails();
-        managerDetails1.setUserId(user.getId());
-        managerDetails1.setFirstName(managerDetails.get("firstName").getAsString());
-        managerDetails1.setLastName(managerDetails.get("lastName").getAsString());
-        managerDetails1.setEmail(managerDetails.get("email").getAsString());
-        managerDetails1.setCountryCode(managerDetails.get("countryCode").getAsString());
-        managerDetails1.setPhoneNumber(managerDetails.get("phoneNumber").getAsString());
-
-        hotelDto.setManagerDetails(managerDetails1);
-
+    private void getHotelData(ResponseModel<InvitationDetailResponse> invitationResponse, User user) {
+        HotelDto hotelRequest = invitationResponse.getData().getHotelRequest();
+        hotelRequest.getManagerDetails().setUserId(user.getId());
         log.info("Onboarding hotel: {}", hotelRequest);
-        onboardHotel(hotelDto);
+        onboardHotel(hotelRequest);
     }
 
     public void onboardHotel(HotelDto hotelDto) {
+        log.info("Calling onboarding service to onboard hotel: {}", hotelDto.getName());
         try {
             String onboardHotelUri = UriComponentsBuilder
                     .fromHttpUrl(baseBookingUrl + ONBOARD_HOTEL)
                     .toUriString();
-
-            WebClient.create()
-                    .post()
-                    .uri(onboardHotelUri)
-                    .bodyValue(hotelDto)
-                    .retrieve()
-                    .toBodilessEntity()
-                    .block();
-
+            webClient.postWithParameterizedTypeReference(onboardHotelUri,
+                    hotelDto,
+                    new ParameterizedTypeReference<>() {
+                    },
+                    DUMMY_TOKEN);
             log.info("Hotel onboarded: {}", hotelDto);
-
+        } catch (WebClientResponseException.BadRequest e) {
+            log.error("Bad request error while onboarding hotel", e);
+            throw new BadRequestException("User already registered or invite already sent");
         } catch (HttpClientErrorException | HttpServerErrorException e) {
-            throw new ServiceCommunicationException("Error occurred while calling booking service");
+            log.error("Error while onboarding hotel", e);
+            throw new ServiceCommunicationException("Error occurred while calling onboarding service");
         } catch (ResourceAccessException e) {
-            throw new ServiceCommunicationException("Network error occurred while calling booking service");
+            log.error("Network error while onboarding hotel", e);
+            throw new ServiceCommunicationException("Network error occurred while calling to onboarding service");
         }
-
     }
 
     @Override
@@ -313,7 +266,7 @@ public class UserServiceImpl implements UserService {
             UserRequest userRequest = new UserRequest();
             userRequest.setSendToName(user.getFirstName());
             userRequest.setSentToEmail(user.getEmail());
-            webClientService.postWithParameterizedTypeReference(notificationBaseUrl + SEND_REGISTRATION_EMAIL_URL,
+            webClient.post(notificationBaseUrl + SEND_REGISTRATION_EMAIL_URL,
                     userRequest,
                     new ParameterizedTypeReference<>() {
                     });
@@ -324,9 +277,5 @@ public class UserServiceImpl implements UserService {
             log.error("Network error while sending therapist invite", e);
             throw new ServiceCommunicationException("Network error occurred while calling to notification service");
         }
-    }
-
-    private String getEncryptedPassword( String password) {
-        return passwordEncoder.encode(password);
     }
 }
