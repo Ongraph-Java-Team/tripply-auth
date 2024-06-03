@@ -7,9 +7,9 @@ spring:
   application:
     name: auth
   datasource:
-    url: jdbc:postgresql://localhost:5432/tripply
+    url: jdbc:postgresql://localhost:5433/tripply
     username: postgres
-    password: root
+    password: postgres
     driver-class-name: org.postgresql.Driver
   liquibase:
     enabled: true
