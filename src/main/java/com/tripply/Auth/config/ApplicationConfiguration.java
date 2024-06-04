@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class ApplicationConfiguration {
@@ -45,5 +46,14 @@ public class ApplicationConfiguration {
         authProvider.setPasswordEncoder(passwordEncoder());
 
         return authProvider;
+    }
+
+    @Bean
+    public WebClient webClient() {
+        return WebClient.builder()
+                .codecs(configure -> configure
+                        .defaultCodecs()
+                        .maxInMemorySize(16 * 1024 * 1024))
+                .build();
     }
 }

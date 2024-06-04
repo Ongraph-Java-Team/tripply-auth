@@ -11,4 +11,7 @@ public interface AuthService {
     ResponseModel<String> blockToken(String jwt);
 
     boolean checkTokenIsBlocked(String jwt);
+    ResponseModel<String> forgotPassword(String email);
+    ResponseModel<String> resetPassword(String password, String token);
+
 }

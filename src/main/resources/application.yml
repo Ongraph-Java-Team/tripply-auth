@@ -3,9 +3,11 @@ server:
   servlet:
     context-path: /auth
 
+
 spring:
   application:
     name: auth
+    version: 1.0
   datasource:
     url: jdbc:postgresql://localhost:5433/tripply
     username: postgres
@@ -27,6 +29,10 @@ application:
     base-url: http://NOTIFICATION
   booking:
     base-url: http://BOOKING
+  auth:
+    base-url: http://localhost:8082
+  ui:
+    base-url: http://localhost:3000
 
 eureka:
   client:
@@ -37,4 +43,4 @@ eureka:
   instance:
     hostname: localhost
 
-#swagger-url: http://localhost:8082/auth/swagger-ui/index.html
+swagger-url: http://localhost:8082/auth/swagger-ui/index.html
