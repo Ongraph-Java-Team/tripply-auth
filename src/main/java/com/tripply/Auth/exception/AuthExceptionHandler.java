@@ -152,4 +152,17 @@ public class AuthExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(UnAuthorizedException.class)
+    public ResponseEntity<ResponseModel<String>> unAuthorizedException(UnAuthorizedException ex) {
+        log.error("UnAuthorizedException occurred: ", ex);
+        ResponseModel<String> errorResponse = new ResponseModel<>();
+        errorResponse.setStatus(HttpStatus.UNAUTHORIZED);
+        errorResponse.setTimestamp(LocalDateTime.now());
+        errorResponse.setErrors(List.of(ErrorDetails.builder()
+                .errorCode(ErrorConstant.ER007.getErrorCode())
+                .errorDesc(ex.getMessage())
+                .build()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+    }
+
 }

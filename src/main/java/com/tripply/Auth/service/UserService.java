@@ -22,6 +22,6 @@ public interface UserService {
     ResponseModel<InvitationDetailResponse> getInvitationDetails(String id);
 
 
-    ResponseModel<String> updateUser(String userEmail);
+    ResponseModel<String> enableUser(String userEmail);
 
 }

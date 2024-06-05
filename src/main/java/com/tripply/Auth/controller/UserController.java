@@ -8,6 +8,9 @@ import com.tripply.Auth.model.response.InvitationDetailResponse;
 import com.tripply.Auth.model.response.UserResponse;
 import com.tripply.Auth.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,13 +78,15 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-
+    @Tag(name = "GET", description = "GET method to confirm user account after registration ")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
     @GetMapping("/confirm/registration")
     public ResponseEntity<ResponseModel<String>> confirmUserAccount(@RequestParam("inviteeEmail") String userEmail) {
         log.info("Start Endpoint: confirming user account {}", userEmail);
-        ResponseModel<String> response = userService.updateUser(userEmail);
+        ResponseModel<String> response = userService.enableUser(userEmail);
         log.info("End Endpoint: confirmed user account {}", userEmail);
         return ResponseEntity.ok(response);
     }
-
 }

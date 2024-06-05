@@ -3,10 +3,7 @@ package com.tripply.Auth.service.Impl;
 import com.tripply.Auth.constants.ErrorConstant;
 import com.tripply.Auth.entity.BlackListToken;
 import com.tripply.Auth.entity.User;
-import com.tripply.Auth.exception.BadCredentialsException;
-import com.tripply.Auth.exception.BadRequestException;
-import com.tripply.Auth.exception.FailToSaveException;
-import com.tripply.Auth.exception.RecordNotFoundException;
+import com.tripply.Auth.exception.*;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
@@ -51,23 +48,21 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException(ErrorConstant.ER004.getErrorDescription());
         }
 
-        if (user.isEnabled()){
-            final String token = jwtUtil.generateToken(user);
-            long expirationDate = jwtUtil.getExpirationTime();
-            final String refreshToken = jwtUtil.generateRefreshToken(user);
-            AuthenticationResponse authResponse = new AuthenticationResponse(token, expirationDate, refreshToken);
-            authResponse.setRole(user.getRole());
-            response.setData(authResponse);
-            response.setMessage("Retrieved token details successfully.");
-            response.setStatus(HttpStatus.OK);
-
-            log.info("AuthService: authenticateUser() ended with username -> {}", loginRequest.getEmail());
-            return response;
-        } else {
-            response.setMessage("Please verify your Account");
-            response.setStatus(HttpStatus.UNAUTHORIZED);
-            return response;
+        if (!user.isEnabled()) {
+            throw new UnAuthorizedException("Please verify your Account");
         }
+
+        final String token = jwtUtil.generateToken(user);
+        long expirationDate = jwtUtil.getExpirationTime();
+        final String refreshToken = jwtUtil.generateRefreshToken(user);
+        AuthenticationResponse authResponse = new AuthenticationResponse(token, expirationDate, refreshToken);
+        authResponse.setRole(user.getRole());
+        response.setData(authResponse);
+        response.setMessage("Retrieved token details successfully.");
+        response.setStatus(HttpStatus.OK);
+
+        log.info("AuthService: authenticateUser() ended with username -> {}", loginRequest.getEmail());
+        return response;
     }
 
     @Override

@@ -244,19 +244,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseModel<String> updateUser(String userEmail) {
+    public ResponseModel<String> enableUser(String userEmail) {
         Optional<User> userOptional = userRepository.findByEmail(userEmail);
-        ResponseModel<String> response = new ResponseModel<>();
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setEnabled(true);
-            userRepository.save(user);
-            response.setStatus(HttpStatus.OK);
-            response.setMessage("User updated successfully");
-        } else {
-            response.setStatus(HttpStatus.BAD_REQUEST);
-            response.setMessage("User not found");
+        if (userOptional.isEmpty()) {
+            throw new RecordNotFoundException("User not found");
         }
+        ResponseModel<String> response = new ResponseModel<>();
+        User user = userOptional.get();
+        user.setEnabled(true);
+        userRepository.save(user);
+        response.setStatus(HttpStatus.OK);
+        response.setMessage("User updated successfully");
         return response;
     }
 
@@ -264,7 +262,7 @@ public class UserServiceImpl implements UserService {
         log.info("Begin sendMail() for the request: {} ", user.getFirstName());
         try {
             UserRequest userRequest = new UserRequest();
-            userRequest.setSendToName(user.getFirstName());
+            userRequest.setSendToName(String.join(" ",user.getFirstName(), user.getLastName()));
             userRequest.setSentToEmail(user.getEmail());
             webClient.post(notificationBaseUrl + SEND_REGISTRATION_EMAIL_URL,
                     userRequest,
