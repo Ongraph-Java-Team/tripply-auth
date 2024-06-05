@@ -3,10 +3,7 @@ package com.tripply.Auth.service.Impl;
 import com.tripply.Auth.constants.ErrorConstant;
 import com.tripply.Auth.entity.BlackListToken;
 import com.tripply.Auth.entity.User;
-import com.tripply.Auth.exception.BadCredentialsException;
-import com.tripply.Auth.exception.BadRequestException;
-import com.tripply.Auth.exception.FailToSaveException;
-import com.tripply.Auth.exception.RecordNotFoundException;
+import com.tripply.Auth.exception.*;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
@@ -47,8 +44,12 @@ public class AuthServiceImpl implements AuthService {
         }
 
         User user = userDetails.get();
-        if (!passwordEncoder.matches(user.getPassword(), loginRequest.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new BadCredentialsException(ErrorConstant.ER004.getErrorDescription());
+        }
+
+        if (!user.isEnabled()) {
+            throw new UnAuthorizedException("Please verify your Account");
         }
 
         final String token = jwtUtil.generateToken(user);
