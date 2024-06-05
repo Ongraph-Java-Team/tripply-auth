@@ -7,7 +7,8 @@ public enum ErrorConstant {
     ER003("2", "ER003", "We apologize for the inconvenience, but due to an internal error, our service is currently unable to process your request."),
     ER004("3", "ER004", "Invalid email or password entered"),
     ER005("4", "ER005", "The request could not be understood or was missing required parameters."),
-    ER006("5", "ER006", "The requested endpoint does not exist.");
+    ER006("5", "ER006", "The requested endpoint does not exist."),
+    ER007("6", "ER007", "The account has not been verified yet");
 
     private final String key;
     private final String errorCode;

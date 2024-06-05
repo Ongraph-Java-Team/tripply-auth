@@ -14,6 +14,7 @@ import com.tripply.Auth.exception.ServiceCommunicationException;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.InviteRequest;
 import com.tripply.Auth.model.response.InvitationDetailResponse;
+import com.tripply.Auth.model.request.UserRequest;
 import com.tripply.Auth.model.response.UserResponse;
 import com.tripply.Auth.repository.RoleRepository;
 import com.tripply.Auth.repository.UserRepository;
@@ -60,6 +61,9 @@ public class UserServiceImpl implements UserService {
     @Value("${application.booking.base-url}")
     private String baseBookingUrl;
 
+    @Value("${application.notification.base-url}")
+    private String notificationBaseUrl;
+
     @Override
     public ResponseModel<String> saveUser(UserDto userDto) {
         log.info("saving user {}", userDto);
@@ -84,7 +88,7 @@ public class UserServiceImpl implements UserService {
             log.info("saved user {}", user);
             responseModel.setMessage("User added successfully");
             responseModel.setStatus(HttpStatus.CREATED);
-
+            sendEmailToUser(user);
         } catch (FailToSaveException e) {
             throw new FailToSaveException("Error while saving user", e);
         }
@@ -239,4 +243,37 @@ public class UserServiceImpl implements UserService {
         return responseModel;
     }
 
+    @Override
+    public ResponseModel<String> enableUser(String userEmail) {
+        Optional<User> userOptional = userRepository.findByEmail(userEmail);
+        if (userOptional.isEmpty()) {
+            throw new RecordNotFoundException("User not found");
+        }
+        ResponseModel<String> response = new ResponseModel<>();
+        User user = userOptional.get();
+        user.setEnabled(true);
+        userRepository.save(user);
+        response.setStatus(HttpStatus.OK);
+        response.setMessage("User updated successfully");
+        return response;
+    }
+
+    private void sendEmailToUser(User user){
+        log.info("Begin sendMail() for the request: {} ", user.getFirstName());
+        try {
+            UserRequest userRequest = new UserRequest();
+            userRequest.setSendToName(String.join(" ",user.getFirstName(), user.getLastName()));
+            userRequest.setSentToEmail(user.getEmail());
+            webClient.post(notificationBaseUrl + SEND_REGISTRATION_EMAIL_URL,
+                    userRequest,
+                    new ParameterizedTypeReference<>() {
+                    });
+        } catch (WebClientResponseException.BadRequest e) {
+            log.error("Bad request error while sending email to user", e);
+            throw new BadRequestException("Error occurred while sending email. Notification service responded with a bad request.");
+        } catch (ResourceAccessException e) {
+            log.error("Network error while sending therapist invite", e);
+            throw new ServiceCommunicationException("Network error occurred while calling to notification service");
+        }
+    }
 }
