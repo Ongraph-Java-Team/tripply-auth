@@ -27,6 +27,7 @@ public class WebSecurityConfig {
     private static final String[] whiteListAPI = {
             "/user/register",
             "/login",
+            "/refreshToken",
             "/user/create-role",
             "/user/register/client",
             "/user/invitee/**",

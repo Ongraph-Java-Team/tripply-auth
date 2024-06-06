@@ -1,5 +1,6 @@
 package com.tripply.Auth.controller;
 
+import com.tripply.Auth.dto.RefreshTokenDto;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
 import com.tripply.Auth.model.ResponseModel;
@@ -48,6 +49,15 @@ public class AuthController {
             response = authService.blockToken(jwt);
         }
         log.info("Endpoint: logout response");
+        return ResponseEntity.ok(response);
+    }
+
+
+    @PostMapping("/refreshToken")
+    public ResponseEntity<ResponseModel<AuthenticationResponse>> getRefreshToken(@Valid @RequestBody RefreshTokenDto refreshTokenDto) {
+        log.info("Endpoint: getExchangeToken request: {}", refreshTokenDto.getRefreshToken());
+        ResponseModel<AuthenticationResponse> response = new ResponseModel<>();
+        response= authService.getRefreshToken( refreshTokenDto.getRefreshToken());
         return ResponseEntity.ok(response);
     }
 }

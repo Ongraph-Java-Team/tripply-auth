@@ -13,6 +13,7 @@ import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.util.JwtUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -97,6 +98,26 @@ public class AuthServiceImpl implements AuthService {
         }
         log.info("AuthService: checkTokenIsBlocked() ended with token -> {}", jwt);
         return true;
+    }
+
+    @Override
+    public ResponseModel<AuthenticationResponse> getRefreshToken(String refreshToken) {
+        log.info("AuthService: getRefreshToken() started with jwt -> {}", refreshToken);
+        if(refreshToken==null || jwtUtil.isTokenExpired(refreshToken)) {
+            throw new BadRequestException("Invalid refresh token");
+        }
+        String email = jwtUtil.extractUsername(refreshToken);
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        ResponseModel<AuthenticationResponse> response = new ResponseModel<>();
+        final String token = jwtUtil.generateToken(user);
+        long expirationDate = jwtUtil.getExpirationTime();
+        AuthenticationResponse authResponse = new AuthenticationResponse(token, expirationDate, refreshToken);
+        authResponse.setRole(user.getRole());
+        response.setData(authResponse);
+        response.setMessage("Retrieved token details successfully.");
+        response.setStatus(HttpStatus.OK);
+        log.info("AuthService: getRefreshToken() ended with token -> {}", refreshToken);
+        return response;
     }
 
 }
