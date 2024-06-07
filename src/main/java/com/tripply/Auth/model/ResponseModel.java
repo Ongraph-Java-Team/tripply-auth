@@ -19,10 +19,9 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResponseModel<T> {
 
-    private HttpStatus status;
-    private String message;
-    private LocalDateTime timestamp;
-    private T data;
-    private List<ErrorDetails> errors;
-
+	private HttpStatus status;
+	private String message;
+	private LocalDateTime timestamp;
+	private T data;
+	private List<ErrorDetails> errors;
 }
