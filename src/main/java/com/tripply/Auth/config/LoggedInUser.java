@@ -1,6 +1,5 @@
 package com.tripply.Auth.config;
 
-import com.tripply.Auth.constants.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
