@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -77,6 +78,7 @@ public class UserController {
     }
 
     @GetMapping(value = "/invitee/{id}")
+    @PreAuthorize("hasRole('REGULAR_USER')")
     public ResponseEntity<ResponseModel<InvitationDetailResponse>> getInviteeDetailsById(@PathVariable String id) {
         log.info("Endpoint: Getting user {}", id);
         ResponseModel<InvitationDetailResponse> response = userService.getInvitationDetails(id);
