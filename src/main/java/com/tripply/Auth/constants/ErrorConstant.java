@@ -8,7 +8,9 @@ public enum ErrorConstant {
     ER004("3", "ER004", "Invalid email or password entered"),
     ER005("4", "ER005", "The request could not be understood or was missing required parameters."),
     ER006("5", "ER006", "The requested endpoint does not exist."),
-    ER007("6", "ER007", "The account has not been verified yet");
+    ER007("6", "ER007", "The account has not been verified yet"),
+    ER008("7", "ER008", "You do not have permission to access this resource."),
+    ER009("8", "ER009", "Your session has expired. Please log in again to continue.");
 
     private final String key;
     private final String errorCode;
