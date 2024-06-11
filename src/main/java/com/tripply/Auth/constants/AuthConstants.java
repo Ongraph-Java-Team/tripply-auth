@@ -10,5 +10,6 @@ public class AuthConstants {
     public static final String ONBOARD_HOTEL = "/booking/onboard-hotel";
     public static final String BEARER = "Bearer ";
     public static final String DUMMY_TOKEN = "dummy-token";
+    public static final String SEND_REGISTRATION_EMAIL_URL = "/notification/send-registration-mail";
 
 }

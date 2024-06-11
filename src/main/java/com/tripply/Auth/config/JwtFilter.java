@@ -1,6 +1,5 @@
 package com.tripply.Auth.config;
 
-import com.tripply.Auth.constants.UserRole;
 import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.util.JwtUtil;
 import jakarta.servlet.FilterChain;
@@ -10,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -58,6 +59,9 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             final String jwt = authHeader.substring(7);
             final String userEmail = jwtUtil.extractUsername(jwt);
+            final List<String> roles = jwtUtil.extractClaim(jwt, claims -> claims.get("roles", List.class));
+            final String userId = jwtUtil.extractClaim(jwt, claims -> claims.get("userId", String.class));
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (authService.checkTokenIsBlocked(jwt)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -66,19 +70,22 @@ public class JwtFilter extends OncePerRequestFilter {
                 return;
             }
 
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
             if (userEmail != null && authentication == null) {
                 UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
 
+                loggedInUser.setUserId(userId);
                 loggedInUser.setUserName(userDetails.getUsername());
-                loggedInUser.setRole(UserRole.REGULAR_USER);
+                loggedInUser.setRole(roles);
 
                 if (jwtUtil.isTokenValid(jwt, userDetails)) {
+                    List<SimpleGrantedAuthority> authorities = roles.stream()
+                            .map(SimpleGrantedAuthority::new)
+                            .toList();
+
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
+                            userEmail,
+                            jwt,
+                            authorities
                     );
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
