@@ -11,6 +11,7 @@ import com.tripply.Auth.exception.RecordNotFoundException;
 import com.tripply.Auth.exception.ServiceCommunicationException;
 import com.tripply.Auth.repository.PasswordResetTokenRepository;
 import com.tripply.Auth.repository.UserRepository;
+import com.tripply.Auth.exception.*;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
@@ -20,7 +21,6 @@ import com.tripply.Auth.service.WebClientService;
 import com.tripply.Auth.util.JwtUtil;
 import com.tripply.Auth.util.RandomTokenGenerator;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
@@ -71,6 +71,10 @@ public class AuthServiceImpl implements AuthService {
         User user = userDetails.get();
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new BadCredentialsException(ErrorConstant.ER004.getErrorDescription());
+        }
+
+        if (!user.isEnabled()) {
+            throw new UnAuthorizedException("Please verify your Account");
         }
 
         final String token = jwtUtil.generateToken(user);
@@ -127,9 +131,6 @@ public class AuthServiceImpl implements AuthService {
                     new ParameterizedTypeReference<>() {
                     },
                     DUMMY_TOKEN);
-//        } catch (WebClientResponseException.BadRequest e) {
-//            log.error("Bad request error while sending therapist invite", e);
-//            throw new BadRequestException("User already has reset pass");
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             log.error("Error while sending forgot password email", e);
             throw new ServiceCommunicationException("Error occurred while calling notification service");
@@ -176,7 +177,5 @@ public class AuthServiceImpl implements AuthService {
         log.info("AuthService: checkTokenIsBlocked() ended with token -> {}", jwt);
         return true;
     }
-
-
 
 }

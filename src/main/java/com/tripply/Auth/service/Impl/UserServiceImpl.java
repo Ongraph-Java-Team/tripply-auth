@@ -1,5 +1,28 @@
 package com.tripply.Auth.service.Impl;
 
+import static com.tripply.Auth.constants.AuthConstants.DUMMY_TOKEN;
+import static com.tripply.Auth.constants.AuthConstants.GET_NOTIFICATION_URL;
+import static com.tripply.Auth.constants.AuthConstants.ONBOARD_HOTEL;
+import static com.tripply.Auth.constants.AuthConstants.SEND_REGISTRATION_EMAIL_URL;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
+
 import com.tripply.Auth.constants.UserRole;
 import com.tripply.Auth.dto.HotelDto;
 import com.tripply.Auth.dto.ManagerDetails;
@@ -13,30 +36,15 @@ import com.tripply.Auth.exception.RecordNotFoundException;
 import com.tripply.Auth.exception.ServiceCommunicationException;
 import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.InviteRequest;
+import com.tripply.Auth.model.request.UserRequest;
 import com.tripply.Auth.model.response.InvitationDetailResponse;
 import com.tripply.Auth.model.response.UserResponse;
 import com.tripply.Auth.repository.RoleRepository;
 import com.tripply.Auth.repository.UserRepository;
 import com.tripply.Auth.service.UserService;
 import com.tripply.Auth.service.WebClientService;
+
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.ResourceAccessException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
-import static com.tripply.Auth.constants.AuthConstants.*;
 
 @Service
 @Slf4j
@@ -60,6 +68,10 @@ public class UserServiceImpl implements UserService {
     @Value("${application.booking.base-url}")
     private String baseBookingUrl;
 
+    @Value("${application.notification.base-url}")
+    private String notificationBaseUrl;
+
+    @Transactional
     @Override
     public ResponseModel<String> saveUser(UserDto userDto) {
         log.info("saving user {}", userDto);
@@ -76,6 +88,7 @@ public class UserServiceImpl implements UserService {
                     .phoneNumber(userDto.getPhoneNumber())
                     .countryCode(userDto.getCountryCode())
                     .role(UserRole.REGULAR_USER)
+                    .enabled(Boolean.FALSE)
                     .build();
 
             user.setPassword(getEncryptedPassword(userDto.getPassword()));
@@ -84,7 +97,7 @@ public class UserServiceImpl implements UserService {
             log.info("saved user {}", user);
             responseModel.setMessage("User added successfully");
             responseModel.setStatus(HttpStatus.CREATED);
-
+            sendEmailToUser(user);
         } catch (FailToSaveException e) {
             throw new FailToSaveException("Error while saving user", e);
         }
@@ -149,7 +162,7 @@ public class UserServiceImpl implements UserService {
             return webClient.getWithParameterizedTypeReference(inviteServiceUri,
                     new ParameterizedTypeReference<>() {
                     },
-                    DUMMY_TOKEN);
+                    SecurityContextHolder.getContext().getAuthentication().getCredentials().toString());
         } catch (WebClientResponseException.BadRequest e) {
             log.error("Bad request error while getting invitee details", e);
             throw new BadRequestException("Invitee not found");
@@ -239,4 +252,37 @@ public class UserServiceImpl implements UserService {
         return responseModel;
     }
 
+    @Override
+    public ResponseModel<String> enableUser(String userEmail) {
+        Optional<User> userOptional = userRepository.findByEmail(userEmail);
+        if (userOptional.isEmpty()) {
+            throw new RecordNotFoundException("User not found");
+        }
+        ResponseModel<String> response = new ResponseModel<>();
+        User user = userOptional.get();
+        user.setEnabled(true);
+        userRepository.save(user);
+        response.setStatus(HttpStatus.OK);
+        response.setMessage("User updated successfully");
+        return response;
+    }
+
+    private void sendEmailToUser(User user){
+        log.info("Begin sendMail() for the request: {} ", user.getFirstName());
+        try {
+            UserRequest userRequest = new UserRequest();
+            userRequest.setSendToName(String.join(" ",user.getFirstName(), user.getLastName()));
+            userRequest.setSentToEmail(user.getEmail());
+            webClient.post(notificationBaseUrl + SEND_REGISTRATION_EMAIL_URL,
+                    userRequest,
+                    new ParameterizedTypeReference<>() {
+                    });
+        } catch (WebClientResponseException.BadRequest e) {
+            log.error("Bad request error while sending email to user", e);
+            throw new BadRequestException("Error occurred while sending email. Notification service responded with a bad request.");
+        } catch (ResourceAccessException e) {
+            log.error("Network error while sending therapist invite", e);
+            throw new ServiceCommunicationException("Network error occurred while calling to notification service");
+        }
+    }
 }
