@@ -12,4 +12,7 @@ public class AuthConstants {
     public static final String DUMMY_TOKEN = "dummy-token";
     public static final String SEND_REGISTRATION_EMAIL_URL = "/notification/send-registration-mail";
 
+    public static final String SEND_FORGET_PASSWORD_EMAIL = "/notification/forgot-password";
+
+    public static final int EXPIRATION = 60 * 1;
 }

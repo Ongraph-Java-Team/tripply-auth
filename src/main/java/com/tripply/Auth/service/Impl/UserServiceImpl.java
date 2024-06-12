@@ -13,7 +13,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,7 +70,6 @@ public class UserServiceImpl implements UserService {
     @Value("${application.notification.base-url}")
     private String notificationBaseUrl;
 
-    @Transactional
     @Override
     public ResponseModel<String> saveUser(UserDto userDto) {
         log.info("saving user {}", userDto);
@@ -162,7 +160,7 @@ public class UserServiceImpl implements UserService {
             return webClient.getWithParameterizedTypeReference(inviteServiceUri,
                     new ParameterizedTypeReference<>() {
                     },
-                    SecurityContextHolder.getContext().getAuthentication().getCredentials().toString());
+                    DUMMY_TOKEN);
         } catch (WebClientResponseException.BadRequest e) {
             log.error("Bad request error while getting invitee details", e);
             throw new BadRequestException("Invitee not found");

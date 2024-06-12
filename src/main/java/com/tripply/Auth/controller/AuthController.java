@@ -50,4 +50,20 @@ public class AuthController {
         log.info("Endpoint: logout response");
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping(value = "/forgot-password", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResponseModel<String>> forgotPassword(@Valid @RequestBody String email){
+        log.info("Endpoint : /forgot-password email started: {}" , email);
+        ResponseModel<String> response = authService.forgotPassword(email);
+        log.info("Endpoint : /forgot-password email ended: {}" , email);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/reset-password", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResponseModel<String>> resetPassword(@Valid @RequestBody String password, @RequestParam String token){
+        log.info("Endpoint : /reset-password started");
+        ResponseModel<String> response = authService.resetPassword(password, token);
+        log.info("Endpoint : /reset-password ended");
+        return ResponseEntity.ok(response);
+    }
 }

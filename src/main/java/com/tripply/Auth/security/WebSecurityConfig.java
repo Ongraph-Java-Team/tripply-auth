@@ -32,6 +32,8 @@ public class WebSecurityConfig {
             "/user/create-role",
             "/user/register/client",
             "/user/invitee/**",
+            "/forgot-password",
+            "/reset-password",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",
