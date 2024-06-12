@@ -16,6 +16,7 @@ import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
 import com.tripply.Auth.repository.BlackListTokenRepository;
+import com.tripply.Auth.repository.UserRepository;
 import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.service.WebClientService;
 import com.tripply.Auth.util.JwtUtil;
@@ -31,6 +32,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 
+import java.util.Date;
 import java.util.Optional;
 
 import static com.tripply.Auth.constants.AuthConstants.DUMMY_TOKEN;
@@ -116,13 +118,15 @@ public class AuthServiceImpl implements AuthService {
     public ResponseModel<String> forgotPassword(String email) {
         log.info("AuthService : forgotPassword() started with email -> {}" , email);
         ResponseModel<String> response = new ResponseModel<>();
-        Optional<User> user = userRepository.findByEmail(email);
-        if (user.isEmpty()){
-            throw new RecordNotFoundException("User Not Found");
-        }
+        User user = userRepository.findByEmail(email).orElseThrow(
+                () -> {
+                    throw new RecordNotFoundException("User not found");
+                }
+        );
         PasswordResetToken passwordResetToken = new PasswordResetToken();
-        passwordResetToken.setUser(user.get());
+        passwordResetToken.setUserId(user.getId());
         passwordResetToken.setToken(RandomTokenGenerator.generateToken());
+        passwordResetToken.setCreatedOn(new Date());
         passwordResetTokenRepository.save(passwordResetToken);
 
         try {
@@ -152,12 +156,21 @@ public class AuthServiceImpl implements AuthService {
             response.setStatus(HttpStatus.FORBIDDEN);
             response.setMessage("Token expired.");
         } else {
-            User user = passwordResetToken.getUser();
-            user.setPassword(password);
-            userRepository.save(user);
-            passwordResetTokenRepository.delete(passwordResetToken);
-            response.setStatus(HttpStatus.OK);
-            response.setMessage("Password updated successfully.");
+            try{
+                User user = userRepository.findById(passwordResetToken.getId()).orElseThrow(
+                        () -> {
+                            throw new RecordNotFoundException("User not found");
+                        }
+                );
+                user.setPassword(password);
+                userRepository.save(user);
+                passwordResetTokenRepository.delete(passwordResetToken);
+                response.setStatus(HttpStatus.OK);
+                response.setMessage("Password updated successfully.");
+            }
+            catch (ResourceAccessException e){
+                throw new RecordNotFoundException("User not found");
+            }
         }
         return response;
     }

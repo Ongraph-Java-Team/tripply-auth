@@ -47,13 +47,4 @@ public class ApplicationConfiguration {
 
         return authProvider;
     }
-
-    @Bean
-    public WebClient webClient() {
-        return WebClient.builder()
-                .codecs(configure -> configure
-                        .defaultCodecs()
-                        .maxInMemorySize(16 * 1024 * 1024))
-                .build();
-    }
 }

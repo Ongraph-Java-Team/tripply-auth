@@ -7,12 +7,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
+import static com.tripply.Auth.constants.AuthConstants.EXPIRATION;
+
 @Data
 @Entity
 @Table(name = "password_reset_token", schema = "identity")
 public class PasswordResetToken {
-
-    private static final int EXPIRATION = 60 * 1;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -20,17 +20,17 @@ public class PasswordResetToken {
 
     private String token;
 
-    @OneToOne(targetEntity = User.class, fetch = FetchType.EAGER)
-    @JoinColumn(nullable = false, name = "user_id")
-    private User user;
+    private UUID userId;
 
     private Date expiryDate;
 
+    private Date createdOn;
+
     public PasswordResetToken(){}
 
-    public PasswordResetToken(String token, User user) {
+    public PasswordResetToken(String token, UUID userId) {
         this.token = token;
-        this.user = user;
+        this.userId = userId;
         this.expiryDate = calculateExpiryDate(EXPIRATION);
     }
 
