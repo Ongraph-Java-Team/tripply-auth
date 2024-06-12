@@ -118,9 +118,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("AuthService : forgotPassword() started with email -> {}" , email);
         ResponseModel<String> response = new ResponseModel<>();
         User user = userRepository.findByEmail(email).orElseThrow(
-                () -> {
-                    throw new RecordNotFoundException("User not found");
-                }
+                () -> new RecordNotFoundException("User Not Found")
         );
         PasswordResetToken passwordResetToken = new PasswordResetToken();
         passwordResetToken.setUserId(user.getId());
