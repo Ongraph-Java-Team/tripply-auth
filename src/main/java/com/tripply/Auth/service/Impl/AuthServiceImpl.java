@@ -16,7 +16,6 @@ import com.tripply.Auth.model.ResponseModel;
 import com.tripply.Auth.model.request.LoginRequest;
 import com.tripply.Auth.model.response.AuthenticationResponse;
 import com.tripply.Auth.repository.BlackListTokenRepository;
-import com.tripply.Auth.repository.UserRepository;
 import com.tripply.Auth.service.AuthService;
 import com.tripply.Auth.service.WebClientService;
 import com.tripply.Auth.util.JwtUtil;
